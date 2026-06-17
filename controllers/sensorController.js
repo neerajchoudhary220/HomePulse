@@ -29,7 +29,7 @@ function readFromFile() {
     }
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error reading sensor readings file:', error);
+    // console.error('Error reading sensor readings file:', error);
     return defaultState;
   }
 }
@@ -39,7 +39,7 @@ function writeToFile(state) {
   try {
     fs.writeFileSync(FILE_PATH, JSON.stringify(state, null, 2), 'utf8');
   } catch (error) {
-    console.error('Error writing to sensor readings file:', error);
+    // console.error('Error writing to sensor readings file:', error);
   }
 }
 

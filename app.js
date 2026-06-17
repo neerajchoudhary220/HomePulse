@@ -67,12 +67,12 @@ wss.on('connection', (ws, request, clientType) => {
     sensorController.setConnectionStatus(true);
     broadcastUpdate();
 
-    console.log(`[ESP8266] Client connected from ${request.socket.remoteAddress}`);
+    // console.log(`[ESP8266] Client connected from ${request.socket.remoteAddress}`);
 
     ws.on('message', (message) => {
       try {
         const payload = JSON.parse(message.toString());
-        console.log('[ESP8266] Data received:', payload);
+        // console.log('[ESP8266] Data received:', payload);
 
         // Expected format: { "light": "on"/"off" } or { "light": true/false }
         if (payload.light !== undefined) {
@@ -86,7 +86,7 @@ wss.on('connection', (ws, request, clientType) => {
           broadcastUpdate();
         }
       } catch (err) {
-        console.error('[ESP8266] Error parsing message:', err.message);
+        // console.error('[ESP8266] Error parsing message:', err.message);
       }
     });
 
@@ -94,17 +94,17 @@ wss.on('connection', (ws, request, clientType) => {
       espClients.delete(ws);
       sensorController.setConnectionStatus(false);
       broadcastUpdate();
-      console.log('[ESP8266] Client disconnected');
+      // console.log('[ESP8266] Client disconnected');
     });
 
     ws.on('error', (err) => {
-      console.error('[ESP8266] Socket error:', err.message);
+      // console.error('[ESP8266] Socket error:', err.message);
       ws.close();
     });
 
   } else if (clientType === 'ui') {
     uiClients.add(ws);
-    console.log(`[UI] Client connected. Total UI clients: ${uiClients.size}`);
+    // console.log(`[UI] Client connected. Total UI clients: ${uiClients.size}`);
 
     // Immediately send the current status to the newly connected UI
     ws.send(JSON.stringify({ event: 'init', data: sensorController.getCurrentState() }));
@@ -112,7 +112,7 @@ wss.on('connection', (ws, request, clientType) => {
     ws.on('message', (message) => {
       try {
         const payload = JSON.parse(message.toString());
-        console.log('[UI] Message received:', payload);
+        // console.log('[UI] Message received:', payload);
 
         // UI requesting action
         if (payload.action === 'silence') {
@@ -120,22 +120,22 @@ wss.on('connection', (ws, request, clientType) => {
           broadcastUpdate();
         }
       } catch (err) {
-        console.error('[UI] Error parsing message:', err.message);
+        // console.error('[UI] Error parsing message:', err.message);
       }
     });
 
     ws.on('close', () => {
       uiClients.delete(ws);
-      console.log(`[UI] Client disconnected. Total UI clients: ${uiClients.size}`);
+      // console.log(`[UI] Client disconnected. Total UI clients: ${uiClients.size}`);
     });
 
     ws.on('error', (err) => {
-      console.error('[UI] Socket error:', err.message);
+      // console.error('[UI] Socket error:', err.message);
       ws.close();
     });
   } else if (clientType === 'status') {
     statusClients.add(ws);
-    console.log(`[Status API] Public API Client connected. Total status clients: ${statusClients.size}`);
+    // console.log(`[Status API] Public API Client connected. Total status clients: ${statusClients.size}`);
 
     // Send current status immediately on connection
     let powerState = "unknown";
@@ -147,11 +147,11 @@ wss.on('connection', (ws, request, clientType) => {
 
     ws.on('close', () => {
       statusClients.delete(ws);
-      console.log(`[Status API] Public API Client disconnected. Total status clients: ${statusClients.size}`);
+      // console.log(`[Status API] Public API Client disconnected. Total status clients: ${statusClients.size}`);
     });
 
     ws.on('error', (err) => {
-      console.error('[Status API] Socket error:', err.message);
+      // console.error('[Status API] Socket error:', err.message);
       ws.close();
     });
   }
@@ -167,7 +167,7 @@ server.on('upgrade', (request, socket, head) => {
     const secretToken = process.env.ESP_TOKEN || 'HomePulseESP8266SecretToken2026';
 
     if (token !== secretToken) {
-      console.warn(`[Security] Unauthorized upgrade request to /ws/esp from IP: ${request.socket.remoteAddress}`);
+      // console.warn(`[Security] Unauthorized upgrade request to /ws/esp from IP: ${request.socket.remoteAddress}`);
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;
@@ -192,11 +192,11 @@ server.on('upgrade', (request, socket, head) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`=============================================`);
-  console.log(` HomePulse Server running on port ${PORT} `);
-  console.log(` WebSocket URL for ESP8266: ws://localhost:${PORT}/ws/esp?token=<TOKEN>`);
-  console.log(` WebSocket URL for UI:      ws://localhost:${PORT}/ws/ui`);
-  console.log(` Public WS Live Status API: ws://localhost:${PORT}/ws/status`);
-  console.log(` Public HTTP Live Status:   http://localhost:${PORT}/api/live`);
-  console.log(`=============================================`);
+  // console.log(`=============================================`);
+  // console.log(` HomePulse Server running on port ${PORT} `);
+  // console.log(` WebSocket URL for ESP8266: ws://localhost:${PORT}/ws/esp?token=<TOKEN>`);
+  // console.log(` WebSocket URL for UI:      ws://localhost:${PORT}/ws/ui`);
+  // console.log(` Public WS Live Status API: ws://localhost:${PORT}/ws/status`);
+  // console.log(` Public HTTP Live Status:   http://localhost:${PORT}/api/live`);
+  // console.log(`=============================================`);
 });
