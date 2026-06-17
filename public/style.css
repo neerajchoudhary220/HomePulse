@@ -474,6 +474,33 @@ html, body {
   animation: glowPulse 3s infinite alternate 0.5s;
 }
 
+.bulb-glow-rays {
+  stroke: var(--text-muted);
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  opacity: 0;
+  transition: var(--transition-smooth);
+}
+
+.bulb-wrapper.on .bulb-glow-rays {
+  stroke: var(--color-gold);
+  stroke-width: 2;
+  opacity: 1;
+  animation: bulbRaysGlow 2s infinite alternate ease-in-out;
+}
+
+@keyframes bulbRaysGlow {
+  0% {
+    opacity: 0.3;
+    stroke-width: 1.5;
+  }
+  100% {
+    opacity: 1;
+    stroke-width: 2.5;
+    filter: drop-shadow(0 0 5px var(--color-gold));
+  }
+}
+
 /* Realistic bulb startup flicker keyframes */
 @keyframes bulbFlickerOn {
   0% {
