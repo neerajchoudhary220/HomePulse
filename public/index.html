@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>HomePulse - Live Smart Grid Monitor</title>
+  <!-- Google Fonts: Outfit and Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glass-bg-container">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon-wrapper">
+          <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="pulse-dot"></div>
+        </div>
+        <div class="logo-text">
+          <h1>HomePulse</h1>
+          <p>ESP8266 Live Power Sentinel</p>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <div class="server-status-pill disconnected" id="uiWSStatus">
+          <span class="status-indicator-dot"></span>
+          <span class="status-label">Dashboard Offline</span>
+        </div>
+        <div class="time-display" id="liveTime">00:00:00 PM</div>
+      </div>
+    </header>
+
+
+    <!-- Hindi Status Alert Banner -->
+    <div id="hindiStatusBanner" class="hindi-banner unknown">
+      कनेक्ट नहीं है - बिजली की स्थिति अज्ञात है
+    </div>
+
+    <!-- Main Grid Content -->
+    <main class="dashboard-grid">
+      
+      <!-- Power Status Card -->
+      <section class="card glass-card" id="powerStatusCard">
+        <div class="card-header">
+          <h3>Mains Electricity</h3>
+          <div class="card-icon light-icon-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="headerBulbIcon">
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .5 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+              <path d="M9 18h6M10 22h4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="card-body status-centered">
+          <div class="light-state-container" id="lightContainer">
+            <div class="bulb-wrapper off" id="bulbWrapper">
+              <svg class="bulb-main-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path class="bulb-glass" d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .5 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                <path class="bulb-filament" d="M9 10h2.5L12 8l.5 2H15" />
+                <path class="bulb-base" d="M9 17h6M9 20h6M10 23h4"/>
+              </svg>
+              <div class="glow-layer"></div>
+            </div>
+            <div class="power-status-badge unknown" id="powerStateBadge">
+              UNKNOWN STATUS
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alarm Controller Card -->
+      <section class="card glass-card" id="alarmCard">
+        <div class="card-header">
+          <h3>Audio Siren Alarm</h3>
+          <div class="card-icon alarm-icon-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="alarmCardIcon">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+        </div>
+        <div class="card-body alarm-controls-wrapper">
+          <!-- Pulse sound waves when alarm is playing -->
+          <div class="alarm-wave-container" id="soundWaves">
+            <span class="wave bar-1"></span>
+            <span class="wave bar-2"></span>
+            <span class="wave bar-3"></span>
+            <span class="wave bar-4"></span>
+            <span class="wave bar-5"></span>
+          </div>
+
+          <div class="alarm-status-banner warning" id="alarmStatusText">
+            Alarm Standby - Grid Status Normal
+          </div>
+
+          <button class="btn btn-alarm-toggle" id="silenceBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
+            </svg>
+            <span>Silence Audio Siren</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ESP8266 Connection Card -->
+      <section class="card glass-card" id="espStatusCard">
+        <div class="card-header">
+          <h3>ESP8266 Link Status</h3>
+          <div class="card-icon esp-icon-glow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2"/>
+              <rect x="6" y="10" width="12" height="12" rx="2"/>
+              <path d="M12 6h.01M9 14h6M9 18h6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="card-body status-centered">
+          <div class="connection-status-circle disconnected" id="espPulseRing">
+            <div class="inner-circle">
+              <span id="espStatusText">OFFLINE</span>
+            </div>
+          </div>
+          <div class="status-details">
+            <div class="detail-row">
+              <span class="detail-label">Security:</span>
+              <span class="detail-value secure-badge">WS Token Secured</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Signal IP:</span>
+              <span class="detail-value" id="espIpAddress">N/A</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <p>HomePulse Smart Dashboard • Secure Websocket Connection Enabled</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
