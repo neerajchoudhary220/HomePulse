@@ -1,6 +1,6 @@
 # HomePulse - Live ESP8266 Grid Power Sentinel
 
-This project delivers a real-time smart grid monitor dashboard using Express, WebSockets, and Web Audio APIs. If a power outage occurs (reported by ESP8266), the dashboard triggers a glowing red warning state and synthesizes an alarm tone in the browser until it is manually silenced on the UI or power is restored.
+This project delivers a real-time smart grid monitor dashboard using Express, WebSockets, and Web Audio APIs. If a power outage occurs (reported by ESP8266), the dashboard triggers a flashing red warning state, shows a prominent large-letter status alert in Hindi (for family accessibility), and synthesizes a realistic wailing emergency alarm siren in the browser until it is manually silenced on the UI or power is restored.
 
 ---
 
@@ -8,45 +8,43 @@ This project delivers a real-time smart grid monitor dashboard using Express, We
 
 ```mermaid
 graph TD
-    ESP[ESP8266 Hardware] -- 1. WS Connect with ?token=... --> Server[Express + WS Server]
+    ESP[ESP8266 Hardware / Simulator] -- 1. WS Connect with ?token=... --> Server[Express + WS Server]
     ESP -- 2. Live Power Data --> Server
     Server -- 3. Log Status --> DB[(sensor_readings.json)]
     Server -- 4. Broadcast Realtime Updates --> Dashboard[Web UI Dashboard]
-    Dashboard -- 5. Silence Alarm Command --> Server
+    Server -- 5. Public API Broadcast --> PublicWS[Public WS /ws/status]
+    Dashboard -- 6. Silence Alarm Command --> Server
 ```
 
 ---
 
 ## 📂 Project Structure
 
-All files have been set up in `/home/neeraj/Public/node/HomePulse/`:
+All files are located in `/home/neeraj/Public/node/HomePulse/`:
 
-- **`app.js`**: Main entry point initializing HTTP and WS servers, managing secure upgrades, and broadcasting updates.
-- **`controllers/sensorController.js`**: Reads/writes real-time states and keeps history logs in `sensor_readings.json`.
-- **`routes/api.js`**: Exposes HTTP endpoints (`/api/status`, `/api/alarm/silence`).
-- **`public/index.html`**: Front-end layout featuring glassmorphism cards and an interactive hardware simulator.
-- **`public/style.css`**: Dark-themed neon styles, floating background orbs, and pulsating status rings.
-- **`public/script.js`**: Handles WebSockets, UI updates, Web Audio synthesizers, and developer mock testing.
-- **`assets/json/sensor_readings.json`**: Persistent JSON store for system states and activity logs.
-- **`.env`**: Port configuration and ESP8266 secret security token.
+- **`app.js`**: Main entry point initializing HTTP and WS servers, managing secure upgrades, and broadcasting status to UI clients and public APIs.
+- **`controllers/sensorController.js`**: Manages real-time state storage and updates.
+- **`routes/api.js`**: Exposes HTTP endpoints (`/api/status`, `/api/alarm/silence`, and the public `/api/live`).
+- **`public/index.html`**: Front-end layout featuring glassmorphism cards and the responsive dashboard.
+- **`public/test.html`**: Standalone mock client panel simulating ESP8266 WebSocket broadcasts.
+- **`public/style.css`**: Premium dark neon styles, breathing gradients, bulb flicker animations, and high-visibility red flashing alert banners.
+- **`public/script.js`**: Handles WebSocket connections, UI updates, detuned dual-oscillator sirens, and silent background audio unlock.
+- **`.gitignore`**: Excludes dependencies, secret files, local logs, and generated database state files from Git tracking.
 
 ---
 
 ## ⚡ Setup & Launching the Server
 
-1. **Verify Dependencies**: Make sure you have installed the required Node packages (already configured in `package.json`):
-
+1. **Verify Dependencies**: Make sure you have installed the required Node packages (configured in `package.json`):
    ```bash
    npm install
    ```
 
 2. **Start the Server**: Run the application in your terminal:
-
    ```bash
    node app.js
    ```
-
-   _The server will start on port `5000` (or the port specified in `.env`)._
+   *The server will start on port `5000` (or the port specified in `.env`).*
 
 3. **Access the Dashboard**: Open your browser and navigate to:
    ```text
@@ -57,28 +55,53 @@ All files have been set up in `/home/neeraj/Public/node/HomePulse/`:
 
 ## 🧪 Testing with the Built-in Hardware Simulator
 
-You do not need ESP8266 hardware plugged in to test this! We built a **Virtual Hardware Simulator** directly into the developer panel of the dashboard:
+We built a standalone **Virtual ESP8266 Simulator** that you can open alongside the main dashboard to test the WebSocket system:
 
-1. Click **Enable Audio** on the top blue banner (required by browsers to allow sounds).
-2. Scroll to the **Virtual ESP8266 Hardware Simulator** card at the bottom.
-3. Click **Connect Virtual ESP**. The simulator will establish a secondary secure WebSocket connection (`/ws/esp?token=...`) to the server.
-4. Click **Simulate Power Cut (OFF)**:
-   - The ESP status indicator changes to **ONLINE**.
-   - The Mains Electricity status changes to **OFF** with a pulsing red neon glow.
-   - The browser will begin playing a synthesized warning alert sweep sound.
-   - The wave visualizer will start dancing.
-5. Click **Silence Audio Siren**:
-   - The sound will stop playing.
-   - The visualizer will transition to a muted golden color.
-6. Click **Simulate Power Back (ON)**:
-   - The status changes back to **ON** (glowing yellow).
-   - The alert automatically disarms and logs the event.
+1. Open the **Main Dashboard** at:
+   ```text
+   http://localhost:5000
+   ```
+2. Open the **Virtual Simulator** in a separate tab/window at:
+   ```text
+   http://localhost:5000/test.html
+   ```
+3. Click **Connect Virtual ESP** on the simulator page. The status badge will change to a glowing green **CONNECTED**.
+4. Click **Power CUT (Low)** on the simulator:
+   - The Main Dashboard will update instantly.
+   - The top banner flashes in large Hindi letters: **"बिजली चली गई है!"** (Power has gone!).
+   - The bulb displays an offline grey state.
+   - A realistic wailing dual-sawtooth emergency siren will begin playing in the browser (unlocks on your first click anywhere on the page).
+5. Click **Power ON (High)** on the simulator:
+   - The dashboard updates back to **"बिजली चालू है"** (Power is ON).
+   - The warning bulb triggers a realistic physical **neon startup flicker** before settling into a warm breathing glow.
+   - The wailing siren shuts off automatically with a smooth fade-out.
 
 ---
 
-## 🔌 Connecting physical ESP8266 Hardware
+## 🔗 Public Integration APIs
 
-To connect your real ESP8266, compile and flash the following code snippet. It connects to your local Wi-Fi network and streams GPIO values over a authenticated WebSocket connection:
+HomePulse supports public integration routes so other users or third-party home automation systems can read the live power status:
+
+### 1. Live WebSocket API
+* **Endpoint**: `ws://localhost:5000/ws/status`
+* **Response Format**:
+  * Broadcasts the status in real time to all connected clients upon any power grid state change.
+  * **JSON Output**:
+    * `{ "power": "on" }` — Grid power is active.
+    * `{ "power": "off" }` — Power outage occurred.
+    * `{ "power": "unknown" }` — ESP8266 monitor is disconnected/offline.
+
+### 2. Live HTTP GET API
+* **Endpoint**: `http://localhost:5000/api/live`
+* **Response Format**:
+  * Returns the current grid power state in JSON:
+  * `{ "power": "on" | "off" | "unknown" }`
+
+---
+
+## 🔌 Connecting Physical ESP8266 Hardware
+
+To connect your real ESP8266, compile and flash the following code snippet. It connects to your local Wi-Fi network and streams GPIO values over an authenticated WebSocket connection:
 
 ```cpp
 #include <ESP8266WiFi.h>
