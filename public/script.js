@@ -1,6 +1,5 @@
 // UI Elements
 const uiWSStatus = document.getElementById('uiWSStatus');
-const liveTime = document.getElementById('liveTime');
 const espPulseRing = document.getElementById('espPulseRing');
 const espStatusText = document.getElementById('espStatusText');
 const espIpAddress = document.getElementById('espIpAddress');
@@ -10,6 +9,8 @@ const soundWaves = document.getElementById('soundWaves');
 const alarmStatusText = document.getElementById('alarmStatusText');
 const silenceBtn = document.getElementById('silenceBtn');
 const hindiStatusBanner = document.getElementById('hindiStatusBanner');
+const audioPermissionBanner = document.getElementById('audioPermissionBanner');
+const btnAudioUnlock = document.getElementById('btnAudioUnlock');
 
 // State variables
 let uiSocket = null;
@@ -27,21 +28,39 @@ let sirenLfo = null;
 let sirenGain = null;
 let userInteractedWithAudio = false;
 
+// Helper to check and toggle audio permission banner
+function checkAudioBannerState() {
+  if (audioPermissionBanner) {
+    if (userInteractedWithAudio || (audioCtx && audioCtx.state === 'running')) {
+      audioPermissionBanner.style.display = 'none';
+    } else {
+      audioPermissionBanner.style.display = 'flex';
+    }
+  }
+}
+
 // Initialize Web Audio Context
 function initAudio() {
   if (audioCtx) {
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().then(() => {
+        if (audioCtx.state === 'running') {
+          userInteractedWithAudio = true;
+          checkAudioBannerState();
+        }
+      }).catch(() => {});
     }
     return;
   }
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     audioCtx = new AudioContextClass();
-    userInteractedWithAudio = true;
-    console.log("Audio Context initialized successfully.");
+    if (audioCtx.state === 'running') {
+      userInteractedWithAudio = true;
+    }
+    checkAudioBannerState();
   } catch (error) {
-    console.error("Failed to initialize Web Audio:", error);
+    // console.error("Failed to initialize Web Audio:", error);
   }
 }
 
@@ -150,6 +169,8 @@ function evaluateAlarmAudioState() {
 function handleUserInteraction() {
   initAudio();
   if (audioCtx && audioCtx.state === 'running') {
+    userInteractedWithAudio = true;
+    checkAudioBannerState();
     evaluateAlarmAudioState();
     window.removeEventListener('click', handleUserInteraction);
     window.removeEventListener('touchstart', handleUserInteraction);
@@ -165,6 +186,7 @@ window.addEventListener('keydown', handleUserInteraction);
 // Attempt instant start on load (in case browser has cached autoplay permission)
 try {
   initAudio();
+  checkAudioBannerState();
 } catch (e) {}
 
 // Connect UI to Backend WebSocket server
@@ -328,11 +350,22 @@ function updateUI() {
   evaluateAlarmAudioState();
 }
 
-// Live Time ticking clock
-setInterval(() => {
-  const now = new Date();
-  liveTime.textContent = now.toLocaleTimeString();
-}, 1000);
+// Bind direct click to unlock audio button
+if (btnAudioUnlock) {
+  btnAudioUnlock.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!audioCtx) {
+      initAudio();
+    }
+    if (audioCtx) {
+      audioCtx.resume().then(() => {
+        userInteractedWithAudio = true;
+        checkAudioBannerState();
+        evaluateAlarmAudioState();
+      });
+    }
+  });
+}
 
 // Start the Dashboard connection
 connectUiSocket();
