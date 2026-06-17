@@ -38,10 +38,19 @@
           <span class="status-indicator-dot"></span>
           <span class="status-label">Dashboard Offline</span>
         </div>
-        <div class="time-display" id="liveTime">00:00:00 PM</div>
       </div>
     </header>
 
+    <!-- Audio Permission Banner -->
+    <div id="audioPermissionBanner" class="audio-permission-banner">
+      <div class="banner-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span>सुरक्षा अलार्म चालू करने के लिए यहाँ क्लिक करें (Click to Enable Audio Alerts)</span>
+      </div>
+      <button class="btn-audio-unlock" id="btnAudioUnlock">चालू करें / Enable</button>
+    </div>
 
     <!-- Hindi Status Alert Banner -->
     <div id="hindiStatusBanner" class="hindi-banner unknown">
