@@ -231,8 +231,8 @@ function connectUiSocket() {
   };
 }
 
-// Silence button toggle handler
-silenceBtn.addEventListener('click', () => {
+// Silence alarm toggle handler (shared by button and bulb click)
+function toggleAlarmSilence() {
   const targetSilence = !currentAppState.alarmSilenced;
   
   // If user silences alarm, make sure we have audio context initialized
@@ -261,7 +261,10 @@ silenceBtn.addEventListener('click', () => {
     })
     .catch(err => console.error("Error silencing alarm via HTTP:", err));
   }
-});
+}
+
+silenceBtn.addEventListener('click', toggleAlarmSilence);
+bulbWrapper.addEventListener('click', toggleAlarmSilence);
 
 // Update UI Layout with new status state
 function updateUI() {

@@ -427,6 +427,7 @@ html, body {
   background: hsla(230, 20%, 15%, 0.3);
   border: 1px solid var(--border-card);
   transition: var(--transition-smooth);
+  cursor: pointer;
 }
 
 .bulb-main-svg {
