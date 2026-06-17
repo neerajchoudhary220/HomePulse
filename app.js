@@ -60,11 +60,31 @@ function broadcastUpdate() {
 // Attach the broadcast function to app so controllers can access it
 app.set('broadcastUpdate', broadcastUpdate);
 
+// Heartbeat Ping-Pong to detect dead/ghost client connections
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000); // Check every 30 seconds
+
+wss.on('close', () => {
+  clearInterval(interval);
+});
+
 // Handle WebSocket connections
 wss.on('connection', (ws, request, clientType) => {
+  ws.isAlive = true;
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
+
   if (clientType === 'esp') {
     espClients.add(ws);
-    sensorController.setConnectionStatus(true);
+    sensorController.setConnectionStatus(espClients.size > 0);
     broadcastUpdate();
 
     // console.log(`[ESP8266] Client connected from ${request.socket.remoteAddress}`);
@@ -92,7 +112,7 @@ wss.on('connection', (ws, request, clientType) => {
 
     ws.on('close', () => {
       espClients.delete(ws);
-      sensorController.setConnectionStatus(false);
+      sensorController.setConnectionStatus(espClients.size > 0);
       broadcastUpdate();
       // console.log('[ESP8266] Client disconnected');
     });

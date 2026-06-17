@@ -64,6 +64,9 @@ function getCurrentState() {
 // Set ESP8266 connection status
 function setConnectionStatus(isConnected) {
   currentState.isESPConnected = isConnected;
+  if (!isConnected) {
+    currentState.lightStatus = "unknown";
+  }
   saveState();
 }
 
