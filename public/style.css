@@ -800,6 +800,7 @@ html, body {
   40% { transform: rotate(-10deg); }
   60% { transform: rotate(5deg); }
   80% { transform: rotate(-5deg); }
+}
 /* Hindi Status Alert Banner */
 .hindi-banner {
   width: 100%;
