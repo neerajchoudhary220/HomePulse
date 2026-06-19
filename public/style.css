@@ -246,6 +246,39 @@ html, body {
   box-shadow: var(--glow-blue);
 }
 
+.btn-timer-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, hsla(210, 90%, 55%, 0.12) 0%, hsla(210, 90%, 45%, 0.22) 100%);
+  color: var(--color-blue);
+  border: 1px solid hsla(210, 90%, 55%, 0.3);
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-timer-switch:hover {
+  background: linear-gradient(135deg, hsla(210, 90%, 55%, 0.2) 0%, hsla(210, 90%, 45%, 0.3) 100%);
+  border-color: var(--color-blue);
+  box-shadow: var(--glow-blue);
+  transform: translateY(-1px);
+}
+
+.btn-timer-switch svg {
+  stroke: var(--color-blue);
+  transition: var(--transition-smooth);
+}
+
+.btn-timer-switch:hover svg {
+  transform: rotate(30deg);
+}
+
 .banner-content {
   display: flex;
   align-items: center;
@@ -918,10 +951,11 @@ html, body {
     flex-direction: column;
     gap: 0.75rem;
   }
-  .server-status-pill {
+  .server-status-pill, .btn-timer-switch {
     width: 100%;
     text-align: center;
     justify-content: center;
+    box-sizing: border-box;
   }
   .dashboard-grid {
     grid-template-columns: 1fr;

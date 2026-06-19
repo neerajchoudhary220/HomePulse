@@ -34,4 +34,21 @@ router.post('/alarm/silence', (req, res) => {
   res.json({ success: true, state: sensorController.getCurrentState() });
 });
 
+const timerController = require('../controllers/timerController');
+
+// Verify Password for Power Timer Switch Page
+router.post('/verify-timer-password', (req, res) => {
+  const { password } = req.body;
+  const correctPassword = process.env.TIMER_PASSWORD || 'admin123';
+  if (password === correctPassword) {
+    return res.json({ success: true });
+  }
+  res.json({ success: false, error: 'Incorrect password' });
+});
+
+// Get current timer & alarm settings
+router.get('/timer/settings', (req, res) => {
+  res.json(timerController.getSettings());
+});
+
 module.exports = router;

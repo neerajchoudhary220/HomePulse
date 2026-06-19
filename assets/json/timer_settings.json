@@ -1,0 +1,15 @@
+{
+  "controlMainSource": false,
+  "relayState": "off",
+  "timer": {
+    "active": false,
+    "duration": 2,
+    "remaining": 0,
+    "action": "off"
+  },
+  "alarm": {
+    "active": false,
+    "time": "12:59",
+    "action": "on"
+  }
+}

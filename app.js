@@ -9,6 +9,7 @@ dotenv.config();
 
 const apiRouter = require('./routes/api');
 const sensorController = require('./controllers/sensorController');
+const timerController = require('./controllers/timerController');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,10 +34,16 @@ app.use((req, res, next) => {
 const uiClients = new Set();
 const espClients = new Set();
 const statusClients = new Set();
+const esp32Clients = new Set();
 
 // Function to broadcast current state to all connected UI and status clients
 function broadcastUpdate() {
   const state = sensorController.getCurrentState();
+
+  // Handle main power source change for Inverter Condition Safety
+  const isMainsOn = state.isESPConnected && state.lightStatus === 'on';
+  timerController.handleMainPowerChange(isMainsOn);
+
   const payload = JSON.stringify({ event: 'status_update', data: state });
   uiClients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -56,6 +63,30 @@ function broadcastUpdate() {
     }
   });
 }
+
+function broadcastTimerUpdate() {
+  const timerSettings = timerController.getSettings();
+  const settingsWithConn = {
+    ...timerSettings,
+    esp32Connected: esp32Clients.size > 0
+  };
+  const payload = JSON.stringify({ event: 'timer_update', data: settingsWithConn });
+  uiClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(payload);
+    }
+  });
+
+  const relayPayload = JSON.stringify({ relay: timerSettings.effectiveRelayState });
+  esp32Clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(relayPayload);
+    }
+  });
+}
+
+// Initialize Timer Controller
+timerController.init(broadcastTimerUpdate);
 
 // Attach the broadcast function to app so controllers can access it
 app.set('broadcastUpdate', broadcastUpdate);
@@ -128,6 +159,13 @@ wss.on('connection', (ws, request, clientType) => {
 
     // Immediately send the current status to the newly connected UI
     ws.send(JSON.stringify({ event: 'init', data: sensorController.getCurrentState() }));
+    ws.send(JSON.stringify({
+      event: 'timer_init',
+      data: {
+        ...timerController.getSettings(),
+        esp32Connected: esp32Clients.size > 0
+      }
+    }));
 
     ws.on('message', (message) => {
       try {
@@ -138,6 +176,14 @@ wss.on('connection', (ws, request, clientType) => {
         if (payload.action === 'silence') {
           sensorController.silenceAlarm(!!payload.value);
           broadcastUpdate();
+        } else if (payload.action === 'set_control_main_source') {
+          timerController.setControlMainSource(!!payload.value);
+        } else if (payload.action === 'set_timer') {
+          timerController.setTimer(!!payload.active, payload.duration, payload.timerAction);
+        } else if (payload.action === 'set_alarm') {
+          timerController.setAlarm(!!payload.active, payload.time, payload.alarmAction);
+        } else if (payload.action === 'set_relay') {
+          timerController.setRelayState(payload.value);
         }
       } catch (err) {
         // console.error('[UI] Error parsing message:', err.message);
@@ -174,6 +220,33 @@ wss.on('connection', (ws, request, clientType) => {
       // console.error('[Status API] Socket error:', err.message);
       ws.close();
     });
+  } else if (clientType === 'esp32') {
+    esp32Clients.add(ws);
+    broadcastTimerUpdate();
+
+    // Send initial relay state to ESP32 immediately
+    ws.send(JSON.stringify({ relay: timerController.getSettings().effectiveRelayState }));
+
+    ws.on('message', (message) => {
+      try {
+        const payload = JSON.parse(message.toString());
+        if (payload.relay !== undefined) {
+          const state = String(payload.relay).toLowerCase() === 'on' ? 'on' : 'off';
+          timerController.setRelayState(state);
+        }
+      } catch (err) {
+        // Silent
+      }
+    });
+
+    ws.on('close', () => {
+      esp32Clients.delete(ws);
+      broadcastTimerUpdate();
+    });
+
+    ws.on('error', (err) => {
+      ws.close();
+    });
   }
 });
 
@@ -195,6 +268,19 @@ server.on('upgrade', (request, socket, head) => {
 
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request, 'esp');
+    });
+  } else if (pathname === '/ws/esp32') {
+    const token = urlObj.searchParams.get('token');
+    const secretToken = process.env.ESP32_TOKEN || process.env.ESP_TOKEN || 'HomePulseESP32SecretToken2026';
+
+    if (token !== secretToken) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request, 'esp32');
     });
   } else if (pathname === '/ws/ui') {
     wss.handleUpgrade(request, socket, head, (ws) => {
